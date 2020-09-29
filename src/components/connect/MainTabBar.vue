@@ -25,7 +25,7 @@
 
 </template>
 
-<script>
+<script scoped>
 import TabBar from '../common/TabBar'
 import TabBarItem from '../common/TabBarItem'
 export default {
