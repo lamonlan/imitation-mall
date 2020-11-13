@@ -1,52 +1,21 @@
 <template>
 <div id="home">
       <nav-bar class="home-nav"><div slot="center">imitation-mall</div></nav-bar>
-      <home-swiper :banners="banners"></home-swiper>
-      <home-recommends :recommends="recommends"></home-recommends>
-      <home-feature></home-feature>
-      <main-control :titles="['流行','新款','精选']" class="tab-control"></main-control>
-      <ul>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-        <li>li</li>
-      </ul>
+
+      <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" @pullingUp="loadMore">
+        <home-swiper :banners="banners"></home-swiper>
+        <home-recommends :recommends="recommends"></home-recommends>
+        <home-feature></home-feature>
+        <main-control 
+          :titles="['流行','新款','精选']" 
+          class="tab-control"
+          @tabClick="tabClick"  
+        ></main-control>
+        <good-list :goods="showGoods"></good-list>
+      </scroll>
+
+      <back-top @click.native="backClick" v-show="isBackTopShow"></back-top>
+      
 </div>
 </template>
 
@@ -58,7 +27,14 @@ import HomeFeature from './childComponents/HomeFeature'
 
 import MainControl from 'components/connect/mainControl/MainControl'
 
-import {getHomeMultidata} from '../../network/home'
+import GoodList from 'components/connect/goods/GoodList'
+
+import Scroll from 'components/common/scroll/Scroll'
+
+import BackTop from 'components/connect/backTop/BackTop'
+
+import {getHomeMultidata,getHomeGoods} from '../../network/home'
+
 
 
 export default {
@@ -68,23 +44,85 @@ export default {
     HomeSwiper,
     HomeRecommends,
     MainControl,
-    HomeFeature
+    HomeFeature,
+    GoodList,
+    Scroll,
+    BackTop
   },
   data() {
     return {
       banners: [],
-      recommends: []
+      recommends: [],
+      goods: {
+        'pop': {page: 0,list: []},
+        'new': {page: 0,list: []},
+        'sell': {page: 0,list: []},
+      },
+      currentType: 'pop',
+      isBackTopShow: false
     }
   },
   //当组件创建之后就请求数据，因此调用生命周期函数
   created() {
     //1:请求多个数据
-    getHomeMultidata().then(res => {
+    this.getHomeMultidata()
+    //2:请求商品数据
+    this.getHomeGoods('pop')
+    this.getHomeGoods('new')
+    this.getHomeGoods('sell')
+  },
+  methods: {
+    tabClick(index){
+      switch(index){
+        case 0:
+          this.currentType = 'pop'
+          break
+        case 1:
+          this.currentType = 'new'
+          break
+        case 2:
+          this.currentType = 'sell'
+          break
+      }
+    },
+
+    backClick(){
+      this.$refs.scroll.scrollTo(0,0)
+    },
+
+    contentScroll(position){
+      this.isBackTopShow = (-position.y) > 1000
+    },
+
+    getHomeMultidata(){
+      getHomeMultidata().then(res => {
       // console.log(res)
       //保存请求过来的数据
       this.banners = res.data.data.banner.list
       this.recommends = res.data.data.recommend.list
     })
+    },
+    getHomeGoods(type){
+      const page = this.goods[type].page + 1
+      getHomeGoods(type,page).then(res=> {
+        console.log(res)
+        this.goods[type].list.push(...res.data.data.list)
+        this.goods[type].page += 1
+
+        this.$refs.scroll.finishPullUp()
+    })
+    },
+
+    loadMore(){
+      this.getHomeGoods(this.currentType)
+      //消除由于bertter-scroll上拉加载高度固定的问题，每次刷新以免出现无法上拉加载的情况出现
+      this.$refs.scroll.scroll.refresh()
+    }
+  },
+  computed: {
+    showGoods(){
+      return this.goods[this.currentType].list
+    }
   }
 }
 </script>
@@ -92,6 +130,8 @@ export default {
 <style scoped>
 #home{
   padding-top: 44px;
+  height: 100vh; 
+  position: relative;
 }
 .home-nav{
   background-color: var(--color-tint);
@@ -108,5 +148,21 @@ export default {
 .tab-control{
   position: sticky;
   top: 44px;
+  z-index: 9;
 }
+
+.content{
+  overflow: hidden;
+  position: absolute;
+  top: 44px;
+  bottom: 49px;
+  left: 0;
+  right: 0;
+}
+
+/* .content{
+  height: calc(100% - 93px);
+  overflow: hidden;
+  margin-top: 44px; 
+} */
 </style>>
