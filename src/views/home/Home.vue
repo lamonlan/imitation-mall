@@ -75,8 +75,16 @@ export default {
       currentType: 'pop',
       isBackTopShow: false,
       tabOffsetTop: 0,
-      isTabFixed: false
+      isTabFixed: false,
+      leaveY:0
     }
+  },
+  activated(){
+    this.$refs.scroll.scrollTo(0,this.leaveY,0)
+    this.$refs.scroll.refresh()
+  },
+  deactivated(){
+    this.leaveY = this.$refs.scroll.getLeaveY()
   },
   //当组件创建之后就请求数据，因此调用生命周期函数
   created() {
@@ -147,7 +155,7 @@ export default {
     getHomeGoods(type){
       const page = this.goods[type].page + 1
       getHomeGoods(type,page).then(res=> {
-        console.log(res)
+        // console.log(res)
         this.goods[type].list.push(...res.data.data.list)
         this.goods[type].page += 1
 
