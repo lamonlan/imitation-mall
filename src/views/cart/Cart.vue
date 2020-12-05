@@ -1,8 +1,12 @@
 <template>
-      <h1>Cart</h1>
+      <div class="cart">
+        分类
+      </div>
 </template>
 
 <script>
+
+
 export default {
   name: 'Cart'
 }

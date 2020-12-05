@@ -29,5 +29,6 @@ export default {
 <style scoped>
 .detailswiper{
     height: 300px;
+    width: 322px;
 }
 </style>

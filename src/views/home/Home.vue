@@ -22,8 +22,7 @@
           :titles="['流行','新款','精选']" 
           class="tab-control"
           @tabClick="tabClick"
-          ref="mainControlTow" 
-          
+          ref="mainControlTow"  
         ></main-control>
         <good-list :goods="showGoods"></good-list>
       </scroll>
@@ -49,7 +48,8 @@ import BackTop from 'components/connect/backTop/BackTop'
 
 import {getHomeMultidata,getHomeGoods} from '../../network/home'
 
-
+import {debounce} from 'components/common/utils'
+import {itemListenerMixin} from 'components/common/mixin'
 
 export default {
   name: 'Home',
@@ -76,15 +76,19 @@ export default {
       isBackTopShow: false,
       tabOffsetTop: 0,
       isTabFixed: false,
-      leaveY:0
+      leaveY:0,
+      itemImageListener: null
     }
   },
+  mixins: [itemListenerMixin],
   activated(){
     this.$refs.scroll.scrollTo(0,this.leaveY,0)
     this.$refs.scroll.refresh()
   },
   deactivated(){
     this.leaveY = this.$refs.scroll.getLeaveY()
+
+    this.$bus.$off('itemImageLoad',this.itemImageListener)
   },
   //当组件创建之后就请求数据，因此调用生命周期函数
   created() {
@@ -103,21 +107,10 @@ export default {
     //   console.log('...')
     // })
 
-    const refresh = this.debounce(this.$refs.scroll.refresh,50)
-    this.$bus.$on('itemImageLoad',()=>{
-      refresh()
-    })
+    
   },
   methods: {
-    debounce(func,delay) {
-      let timer = null
-      return function(...args){
-        if(timer) clearTimeout(timer)
-        timer = setTimeout(() => {
-          func.apply(this,args)
-        }, delay);
-      }
-    },
+    
     tabClick(index){
       switch(index){
         case 0:
